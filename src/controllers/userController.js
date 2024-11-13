@@ -23,6 +23,7 @@ const writeUser = (users) => {
 };
 
 exports.getAllUsers = (req, res, next) => {
+    console.log('user token:', req.user);
     try {
         const users = readUsers();
         res.json(users);
