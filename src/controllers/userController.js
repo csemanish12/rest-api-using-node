@@ -1,6 +1,7 @@
 const {v4: uuidv4}  = require('uuid');
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 
 const userFilePath = path.resolve(__dirname, '../../data/users.json');
 const JSON_SPACE_INDENTATION = 2;
@@ -37,9 +38,37 @@ exports.getUserById = (req, res) => {
     const user = users.find((u) => u.id === req.params.id);
 
     if (user) {
-        const user_response = {id: user.id, username: user.username}; 
-        res.json(user_response);
+        const userResponse = {id: user.id, username: user.username}; 
+        res.json(userResponse);
     } else {
         res.status(404).json({error: 'User not found'});
     }
 }
+
+exports.updateUser = async (req, res) => {
+    const users = readUsers();
+    const userIndex = users.findIndex((u) => u.id === req.params.id);
+
+    if (userIndex === -1) {
+        return res.status(404).json({error: 'User not found'});
+    }
+    hashedPassword = await bcrypt.hash(req.body.password, 10);
+    users[userIndex] = {...users[userIndex], ...req.body, password: hashedPassword};
+    writeUser(users);
+    const userResponse  = {id: users[userIndex].id, username: users[userIndex].username};
+    res.json(userResponse);
+};
+
+exports.deleteUser = async (req, res) => {
+    const users = readUsers();
+    const userIndex = users.findIndex((u) => u.id === req.params.id);
+
+    if (userIndex === -1) {
+        return res.status(404).json({error: 'User not found'});
+    }
+
+    users.splice(userIndex, 1);
+    writeUser(users);
+    res.status(204).end();
+
+};
