@@ -2,6 +2,7 @@ const {v4: uuidv4}  = require('uuid');
 const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
+const { userResponseSchema, userListResponseSchema } = require('../schemas/responseSchema');
 
 const userFilePath = path.resolve(__dirname, '../../data/users.json');
 const JSON_SPACE_INDENTATION = 2;
@@ -26,7 +27,14 @@ exports.getAllUsers = (req, res, next) => {
     console.log('user token:', req.user);
     try {
         const users = readUsers();
-        res.json(users);
+        const { error, value } = userListResponseSchema.validate(users, {stripUnknown: true});        
+        
+        if (error) {
+            logger.error('response validation failed:', error.details)
+            return res.status(500).json({error: 'Internal server error'});
+        }
+        
+        res.json(value);
     } catch (error) {
         logger.error('failed to retrieve users');
         next(error);
